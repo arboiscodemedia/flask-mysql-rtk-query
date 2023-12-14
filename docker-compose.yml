@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  mysqldb:
+    image: mysql:latest
+    container_name: mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: myrootpassword
+      MYSQL_DATABASE: mydb
+    ports:
+      - "3306:3306"
+    networks:
+      - netcon
+    restart: always
+
+  api:
+    build: ./api
+    container_name: api_container
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./api:/api
+    ports:
+      - 5000:5000
+    networks:
+      - netcon
+    depends_on:
+      - mysqldb
+    restart: unless-stopped
+
+  app:
+    build: ./app
+    container_name: app_container
+    stdin_open: true
+    tty: true
+    ports:
+      - 3000:3000
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    depends_on:
+      - mysqldb
+      - api
+    networks:
+      - netcon
+    restart: on-failure
+
+networks:
+  netcon:
+    driver: bridge
